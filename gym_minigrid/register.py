@@ -19,3 +19,4 @@ def register(
 
     # Add the environment to the set
     env_list.append(id)
+    

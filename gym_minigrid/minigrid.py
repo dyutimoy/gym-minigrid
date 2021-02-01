@@ -47,6 +47,7 @@ OBJECT_TO_IDX = {
     'goal'          : 8,
     'lava'          : 9,
     'agent'         : 10,
+    'dropzone'          : 11,
 }
 
 IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
@@ -142,6 +143,8 @@ class WorldObj:
             v = Goal()
         elif obj_type == 'lava':
             v = Lava()
+        elif obj_type == 'dropzone':
+            v = Dropzone(color)
         else:
             assert False, "unknown object type in decode '%s'" % obj_type
 
@@ -271,6 +274,31 @@ class Door(WorldObj):
 
             # Draw door handle
             fill_coords(img, point_in_circle(cx=0.75, cy=0.50, r=0.08), c)
+
+
+class Dropzone(WorldObj):
+    def __init__(self, color='purple'):
+        super().__init__('dropzone', color)
+        
+
+    def can_overlap(self):
+        """The agent can only walk over this cell when the door is open"""
+        return True
+
+    def see_behind(self):
+        return True
+    def can_contain(self):
+        return True
+
+    def render(self, img):
+        c = COLORS[self.color]
+
+        
+        #body person
+        fill_coords(img, point_in_rect(0, 1, 0.5, 1), c)
+        
+        # Draw door handle
+        fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
 
 class Key(WorldObj):
     def __init__(self, color='blue'):
