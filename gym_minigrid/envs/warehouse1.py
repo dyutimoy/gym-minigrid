@@ -119,24 +119,22 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			front_right_cell = None
 		
 		#print("front",front_cell)
-		if front_cell_initial is not None:
+		#if front_cell_initial is not None:
 			
-			if action == self.actions.pickup and front_cell_initial.type== 'ball' and front_cell is None:
-				if self.carrying and self.carrying.color == 'green':
-					reward += 0.05
-				if self.carrying and self.carrying.color == 'blue':
-					reward -= 1.2
+		#	if action == self.actions.pickup and front_cell_initial.type== 'ball' and front_cell is None:
+		#		if self.carrying and self.carrying.color == 'green':
+		#			reward += 0.3
+		#		if self.carrying and self.carrying.color == 'blue':
+		#			reward -= 0.01
 
 		#print("front right",front_right_cell)
-		if action == self.actions.drop and front_right_cell is not None and front_cell_initial is None:	
-			if front_right_cell.type == 'dropzone':
+		if action == self.actions.drop and front_right_cell is not None and front_cell_initial is None and front_cell is not None:	
+			if front_right_cell.type == 'dropzone' :
 				reward+=0.5
 
-		if action == self.actions.drop and front_cell_initial is None:
-			if self.carrying and self.carrying.color =='blue':
-				reward +=0.3
-			if self.carrying and self.carrying.color =='green':
-				reward += 0.01
+		#if action == self.actions.drop and front_cell_initial is None:
+		#	if self.carrying and self.carrying.color =='green':
+		#		reward += 0.02
 
 		if action == self.actions.pickup:
 
@@ -145,12 +143,12 @@ class SimpleWarehouseEnv(MiniGridEnv):
 				#print("color", self.carrying.color)
 				self.carrying.color = 'blue'
 				reward += 0.3
-		if self.carrying:
-			if action == self.actions.pickup :
-				reward -= 0.5
+		#if self.carrying:
+		#	if action == self.actions.pickup :
+		#		reward -= 0.5
 
 		if action == self.actions.drop and front_cell_initial  is not None:
-			reward -=0.5
+			reward -=0.01
 
 		#print(reward)
 		return obs,reward, done, info
