@@ -17,7 +17,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			n_pods =4,  #now mostly would be kept zero
 			n_cluster=4,
 	):
-		print("of")
+		#print("of")
 		self.agent_start_pos = agent_start_pos
 		self.agent_start_dir = agent_start_dir
 
@@ -118,28 +118,41 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		else:
 			front_right_cell = None
 		
-		print("front",front_cell)
+		#print("front",front_cell)
 		if front_cell_initial is not None:
 			
-			if action == self.actions.pickup and front_cell_initial.type== 'ball':
+			if action == self.actions.pickup and front_cell_initial.type== 'ball' and front_cell is None:
 				if self.carrying and self.carrying.color == 'green':
-					reward += 0.1
-		print("front right",front_right_cell)
+					reward += 0.05
+				if self.carrying and self.carrying.color == 'blue':
+					reward -= 1.2
+
+		#print("front right",front_right_cell)
 		if action == self.actions.drop and front_right_cell is not None and front_cell_initial is None:	
 			if front_right_cell.type == 'dropzone':
 				reward+=0.5
 
+		if action == self.actions.drop and front_cell_initial is None:
+			if self.carrying and self.carrying.color =='blue':
+				reward +=0.3
+			if self.carrying and self.carrying.color =='green':
+				reward += 0.01
+
 		if action == self.actions.pickup:
-			
 
 			if self.carrying and self.carrying.color == 'green' and front_right_cell is not None and front_right_cell.type == 'dropzone' and front_cell_initial is not None:
-				print("carry", self.carrying)
-				print("color", self.carrying.color)
+				#print("carry", self.carrying)
+				#print("color", self.carrying.color)
 				self.carrying.color = 'blue'
 				reward += 0.3
+		if self.carrying:
+			if action == self.actions.pickup :
+				reward -= 0.5
 
+		if action == self.actions.drop and front_cell_initial  is not None:
+			reward -=0.5
 
-		
+		#print(reward)
 		return obs,reward, done, info
 
 class SimpleWarehouseEnv32x32(SimpleWarehouseEnv):
