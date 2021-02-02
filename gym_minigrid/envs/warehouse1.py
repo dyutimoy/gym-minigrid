@@ -131,9 +131,9 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		if action == self.actions.drop and front_right_cell is not None and front_cell_initial is None and front_cell is not None:	
 			if front_right_cell.type == 'dropzone' and front_cell.color == "green" :
 				reward+=0.5
-      else:
-        reward -=0.15
-			
+
+		if (action == self.actions.drop and front_right_cell is None and  front_cell_initial is None and front_cell is not None) or (action == self.actions.drop and front_right_cell is not None and front_right_cell.type != 'dropzone' and front_cell_initial is None and front_cell is not None):
+			reward -=0.1 
 
 		#if action == self.actions.drop and front_cell_initial is None:
 		#	if self.carrying and self.carrying.color =='green':
