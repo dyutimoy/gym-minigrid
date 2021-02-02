@@ -92,7 +92,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		for i_pod_x in range(self.n_pods):
 			for i_pod_y in range(self.n_pods):
 				for i_cluster in range(self.n_cluster):
-					if random()>.99 and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'green':
+					if random()>.999 and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'green':
 						#print(random())
 						self.pods[i_pod_x][i_pod_y][i_cluster].color= 'green'
 
@@ -119,13 +119,13 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			front_right_cell = None
 		
 		#print("front",front_cell)
-		#if front_cell_initial is not None:
+		if front_cell_initial is not None:
 			
-		#	if action == self.actions.pickup and front_cell_initial.type== 'ball' and front_cell is None:
-		#		if self.carrying and self.carrying.color == 'green':
-		#			reward += 0.3
-		#		if self.carrying and self.carrying.color == 'blue':
-		#			reward -= 0.01
+			if action == self.actions.pickup and front_cell_initial.type== 'ball' and front_cell is None:
+				if self.carrying and self.carrying.color == 'green':
+					reward += 0.1
+				if self.carrying and self.carrying.color == 'blue':
+					reward -= 0.2
 
 		#print("front right",front_right_cell)
 		if action == self.actions.drop and front_right_cell is not None and front_cell_initial is None and front_cell is not None:	
@@ -155,7 +155,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 
 class SimpleWarehouseEnv32x32(SimpleWarehouseEnv):
 	def __init__(self):
-		super().__init__(size=10, n_pods=2, n_cluster=2)
+		super().__init__(size=10, n_pods=2, n_cluster=4)
 
 
 
