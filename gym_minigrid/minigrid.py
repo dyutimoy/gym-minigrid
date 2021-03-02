@@ -47,16 +47,21 @@ OBJECT_TO_IDX = {
     'goal'          : 8,
     'lava'          : 9,
     'agent'         : 10,
-    'dropzone'          : 11,
+    'dropzone'      : 11,
+    'rackzone'      : 12,
 }
 
 IDX_TO_OBJECT = dict(zip(OBJECT_TO_IDX.values(), OBJECT_TO_IDX.keys()))
 
 # Map of state names to integers
 STATE_TO_IDX = {
-    'open'  : 0,
-    'closed': 1,
-    'locked': 2,
+    'open'       : 0,
+    'closed'     : 1,
+    'locked'     : 2,
+    'scheduled'  : 3,
+    'unschedled' : 4,
+    'occupied'   : 5,
+    'unoccupied' : 6,
 }
 
 # Map of agent direction indices to vectors
@@ -89,7 +94,7 @@ class WorldObj:
         # Current position of the object
         self.cur_pos = None
 
-    def can_overlap(self):
+    def can_overlap(self,env):
         """Can the agent overlap with this?"""
         return False
 
@@ -110,11 +115,11 @@ class WorldObj:
         return False
 
     def encode(self):
-        """Encode the a description of this object as a 3-tuple of integers"""
-        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0)
+        """Encode the a description of this object as a 3-tuple of integers and time if applicable"""
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0,-1)
 
     @staticmethod
-    def decode(type_idx, color_idx, state):
+    def decode(type_idx, color_idx, state,time_count_val):
         """Create an object from a 3-tuple state description"""
 
         obj_type = IDX_TO_OBJECT[type_idx]
@@ -126,17 +131,22 @@ class WorldObj:
         # State, 0: open, 1: closed, 2: locked
         is_open = state == 0
         is_locked = state == 2
+        time_count = time_count_val 
+        is_scheduled = state == 3
+        is_unscheduled = state ==4
+        is_occupied = state == 5
+        is_unoccupied = state == 6
 
         if obj_type == 'wall':
             v = Wall(color)
         elif obj_type == 'floor':
             v = Floor(color)
         elif obj_type == 'ball':
-            v = Ball(color)
+            v = Ball(color, time_count, is_scheduled)
         elif obj_type == 'key':
             v = Key(color)
         elif obj_type == 'box':
-            v = Box(color)
+            v = Box(color, is_scheduled, is_unscheduled)
         elif obj_type == 'door':
             v = Door(color, is_open, is_locked)
         elif obj_type == 'goal':
@@ -144,7 +154,9 @@ class WorldObj:
         elif obj_type == 'lava':
             v = Lava()
         elif obj_type == 'dropzone':
-            v = Dropzone(color)
+            v = Dropzone(color, is_occupied, is_unoccupied)
+        elif obj_type == 'rackzone':
+            v =Rackzone(color, is_occupied, is_unoccupied,time_count)
         else:
             assert False, "unknown object type in decode '%s'" % obj_type
 
@@ -158,7 +170,7 @@ class Goal(WorldObj):
     def __init__(self):
         super().__init__('goal', 'green')
 
-    def can_overlap(self):
+    def can_overlap(self,env):
         return True
 
     def render(self, img):
@@ -172,7 +184,7 @@ class Floor(WorldObj):
     def __init__(self, color='blue'):
         super().__init__('floor', color)
 
-    def can_overlap(self):
+    def can_overlap(self,env):
         return True
 
     def render(self, img):
@@ -219,7 +231,7 @@ class Door(WorldObj):
         self.is_open = is_open
         self.is_locked = is_locked
 
-    def can_overlap(self):
+    def can_overlap(self,env):
         """The agent can only walk over this cell when the door is open"""
         return self.is_open
 
@@ -249,7 +261,7 @@ class Door(WorldObj):
         elif not self.is_open:
             state = 1
 
-        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state)
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, 0 )
 
     def render(self, img):
         c = COLORS[self.color]
@@ -277,28 +289,147 @@ class Door(WorldObj):
 
 
 class Dropzone(WorldObj):
-    def __init__(self, color='purple'):
+    def __init__(self, color='purple',contains =None,is_occupied = False, is_unoccupied = True):
         super().__init__('dropzone', color)
-        
+        self.contains = contains
+        self.is_occupied  = is_occupied
+        self.is_unoccupied = is_unoccupied
 
-    def can_overlap(self):
+    def can_overlap(self,env):
         """The agent can only walk over this cell when the door is open"""
-        return True
+        if self.is_occupied and env.carrying == None:
+            return True
+        if self.is_unoccupied:
+            return True
+        if self.is_occupied and env.carrying != None:
+            return False
 
     def see_behind(self):
         return True
     def can_contain(self):
         return True
 
+    def toggle(self,env, pos): 
+
+        if env.carrying is None and self.contains:
+            env.carrying = self.contains
+            self.is_unoccupied = True
+            self.is_occupied = False
+            self.contains = None
+        elif env.carrying and self.contains is None:
+            self.contains = env.carrying
+            self.is_occupied = True
+            self.is_unoccupied = False
+            env.carrying = None
+            self.contains.is_scheduled = False
+            self.contains.is_unscheduled = True
+            if self.contains.time_count != -1:
+                env.reward += -(env.step_count - self.contains.time_count)/100  +2 
+            self.contains.time_count = -1
+
+        return True
     def render(self, img):
         c = COLORS[self.color]
+        a = COLORS['red']
+        if self.is_occupied: 
+        
+            #body person
+            fill_coords(img, point_in_rect(0, 1, 0.5, 1), c)
+            
+            # Draw door handle
+            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
 
+        else:
+            #body person
+            fill_coords(img, point_in_rect(0, 1, 0.5, 1), a)
+            
+            # Draw door handle
+            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), a)
+
+    def encode(self):
+        if self.is_occupied:
+            state = 5
+            time_count_val = self.contains.time_count
+
+
+        if self.is_unoccupied:
+            state = 6
+            time_count_val =0 
+
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, 0 )
+
+
+
+
+class Rackzone(WorldObj):
+    def __init__(self, color='yellow', contains = None, is_occupied = True, is_unoccupied =False, time_count = -1):
+        super().__init__('rackzone', color)
         
-        #body person
-        fill_coords(img, point_in_rect(0, 1, 0.5, 1), c)
+        self.contains = contains
+        self.time_count = time_count
+        self.is_occupied  = is_occupied
+        self.is_unoccupied = is_unoccupied
+    def can_overlap(self,env):
+        """The agent can only walk over this cell when the door is open"""
+        if self.is_occupied and env.carrying == None:
+            return True
+        if self.is_unoccupied:
+            return True
+        if self.is_occupied and env.carrying != None:
+            return False
+
+    def see_behind(self):
+        return True
+    def can_contain(self):
+        return True
+
+    def toggle(self,env, pos): 
+
+        if env.carrying is None and self.contains:
+            env.carrying = self.contains
+            self.is_unoccupied = True
+            self.is_occupied = False
+            self.contains = None
+        elif env.carrying and self.contains is None:
+            self.contains = env.carrying
+            self.is_occupied = True
+            self.is_unoccupied = False
+            env.carrying = None
+            if self.contains.time_count == -1:
+                self.color = 'yellow'
+            else: 
+                self.color = 'green'
+
+        return True
+
+    def encode(self):
+        if self.is_occupied:
+            state = 5
+            time_count_val = self.contains.time_count
+
+        if self.is_unoccupied:
+            state = 6
+            time_count_val = -1
+
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, time_count_val )
+
+    def render(self, img):
+        c = COLORS[self.color]
+        a = COLORS['red']
+        if self.is_occupied: 
         
-        # Draw door handle
-        fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
+            #body person
+            fill_coords(img, point_in_rect(0, 1, 0.5, 1), c)
+            
+            # Draw door handle
+            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
+
+        else:
+            #body person
+            fill_coords(img, point_in_rect(0, 1, 0.5, 1), a)
+            
+            # Draw door handle
+            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), a)
 
 class Key(WorldObj):
     def __init__(self, color='blue'):
@@ -322,19 +453,42 @@ class Key(WorldObj):
         fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0,0,0))
 
 class Ball(WorldObj):
-    def __init__(self, color='blue'):
-        super(Ball, self).__init__('ball', color)
-
+    def __init__(self, color='blue', is_scheduled = False, is_unscheduled = True, time_count = -1):
+        super(Ball, self).__init__('ball', color )
+        self.time_count = time_count
+        self.is_scheduled = is_scheduled
+        self.is_unscheduled = is_unscheduled
+        
     def can_pickup(self):
         return True
 
+
     def render(self, img):
-        fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+        if self.is_scheduled:
+            fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS[self.color])
+        else:
+            fill_coords(img, point_in_circle(0.5, 0.5, 0.31), COLORS['red'])    
+
+    def set_time_count(self,env):
+        self.time_count = env.step_count
+        print(self.time_count)
+        self.is_scheduled = True
+        self.is_unscheduled = False
+
+    def encode(self):
+        if self.is_scheduled :
+            state = 3
+
+        if self.is_unscheduled:
+            state = 4 
+        
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, self.time_count )
 
 class Box(WorldObj):
     def __init__(self, color, contains=None):
         super(Box, self).__init__('box', color)
         self.contains = contains
+
 
     def can_pickup(self):
         return True
@@ -566,7 +720,7 @@ class Grid:
         if vis_mask is None:
             vis_mask = np.ones((self.width, self.height), dtype=bool)
 
-        array = np.zeros((self.width, self.height, 3), dtype='uint8')
+        array = np.zeros((self.width, self.height, 4), dtype='uint8')
 
         for i in range(self.width):
             for j in range(self.height):
@@ -577,6 +731,7 @@ class Grid:
                         array[i, j, 0] = OBJECT_TO_IDX['empty']
                         array[i, j, 1] = 0
                         array[i, j, 2] = 0
+                        array[i, j, 3] = 0
 
                     else:
                         array[i, j, :] = v.encode()
@@ -590,15 +745,15 @@ class Grid:
         """
 
         width, height, channels = array.shape
-        assert channels == 3
+        assert channels == 4
 
         vis_mask = np.ones(shape=(width, height), dtype=np.bool)
 
         grid = Grid(width, height)
         for i in range(width):
             for j in range(height):
-                type_idx, color_idx, state = array[i, j]
-                v = WorldObj.decode(type_idx, color_idx, state)
+                type_idx, color_idx, state,time_count = array[i, j]
+                v = WorldObj.decode(type_idx, color_idx, state, time_count)
                 grid.set(i, j, v)
                 vis_mask[i, j] = (type_idx != OBJECT_TO_IDX['unseen'])
 
@@ -747,14 +902,14 @@ class MiniGridEnv(gym.Env):
 
         # Check that the agent doesn't overlap with an object
         start_cell = self.grid.get(*self.agent_pos)
-        assert start_cell is None or start_cell.can_overlap()
+        assert start_cell is None or start_cell.can_overlap(self)
 
         # Item picked up, being carried, initially nothing
         self.carrying = None
 
         # Step count since episode start
         self.step_count = 0
-
+        self.reward = 0
         # Return first observation
         obs = self.gen_obs()
         return obs
@@ -1127,7 +1282,7 @@ class MiniGridEnv(gym.Env):
     def step(self, action):
         self.step_count += 1
 
-        reward = 0
+        self.reward = 0
         done = False
 
         # Get the position in front of the agent
@@ -1148,11 +1303,11 @@ class MiniGridEnv(gym.Env):
 
         # Move forward
         elif action == self.actions.forward:
-            if fwd_cell == None or fwd_cell.can_overlap():
+            if fwd_cell == None or fwd_cell.can_overlap(self):
                 self.agent_pos = fwd_pos
             if fwd_cell != None and fwd_cell.type == 'goal':
                 done = True
-                reward = self._reward()
+                self.reward = self._reward()
             if fwd_cell != None and fwd_cell.type == 'lava':
                 done = True
 
@@ -1188,7 +1343,7 @@ class MiniGridEnv(gym.Env):
 
         obs = self.gen_obs()
 
-        return obs, reward, done, {}
+        return obs, self.reward, done, {}
 
     def gen_obs_grid(self):
         """

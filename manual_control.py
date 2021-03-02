@@ -61,13 +61,14 @@ def key_handler(event):
     if event.key == ' ':
         step(env.actions.toggle)
         return
+    """    
     if event.key == 'p':
         step(env.actions.pickup)
         return
     if event.key == 'd':
         step(env.actions.drop)
         return
-
+    """
     if event.key == 'enter':
         step(env.actions.done)
         return

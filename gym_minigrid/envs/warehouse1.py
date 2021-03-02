@@ -63,7 +63,10 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		for i_pod_x in range(self.n_pods):
 			for i_pod_y in range(self.n_pods):
 				for i_cluster in range(self.n_cluster):
-					self.pods[i_pod_x][i_pod_y][i_cluster]=Ball()
+					if random()>.5:
+						self.pods[i_pod_x][i_pod_y][i_cluster]=Rackzone(color = "yellow",contains= Ball())
+					else:
+						self.pods[i_pod_x][i_pod_y][i_cluster]=Rackzone(color = "red",contains= None, is_occupied = False, is_unoccupied = True)
 
 					#change this to bot
 					#!!!!!!!!!!!!!!
@@ -92,11 +95,16 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		for i_pod_x in range(self.n_pods):
 			for i_pod_y in range(self.n_pods):
 				for i_cluster in range(self.n_cluster):
-					if random()>.999 and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'green':
+					if random()>.99 and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'red' and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'green' : 
 						#print(random())
+						self.pods[i_pod_x][i_pod_y][i_cluster].contains.set_time_count(self)
 						self.pods[i_pod_x][i_pod_y][i_cluster].color= 'green'
 
 		# Update obstacle postions
+		# introduce orders by poisson distribution
+		# schdule them rewards
+		# better results
+		
 
 		"""
 		
@@ -112,6 +120,9 @@ class SimpleWarehouseEnv(MiniGridEnv):
 
 		obs, reward, done, info = MiniGridEnv.step(self, action)
 
+
+
+		"""
 		front_cell = self.grid.get(*self.front_pos)
 		if self.front_pos[0]+ np.array(-1) >= 0 and self.front_pos[0]+ np.array(-1)< self.width and self.front_pos[1]+ np.array(0) >= 0 and  self.front_pos[1]+ np.array(0) < self.height:
 			front_right_cell=self.grid.get(*self.front_pos+ np.array((-1, 0)))
@@ -152,7 +163,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 
 		if action == self.actions.drop and front_cell_initial  is not None:
 			reward -=0.01
-
+		"""
 		#print(reward)
 		return obs,reward, done, info
 
