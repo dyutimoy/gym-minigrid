@@ -324,7 +324,7 @@ class Dropzone(WorldObj):
             self.contains.is_scheduled = False
             self.contains.is_unscheduled = True
             if self.contains.time_count != -1:
-                env.reward += -(env.step_count - self.contains.time_count)/100  +2 
+                env.reward += -(env.step_count - self.contains.time_count)/100  +4 
             self.contains.time_count = -1
 
         return True
@@ -814,13 +814,13 @@ class MiniGridEnv(gym.Env):
         left = 0
         right = 1
         forward = 2
-
-        # Pick up an object
-        pickup = 3
-        # Drop an object
-        drop = 4
         # Toggle/activate an object
-        toggle = 5
+        toggle = 3
+        # Pick up an object
+        pickup = 4
+        # Drop an object
+        drop = 5
+        
 
         # Done completing task
         done = 6

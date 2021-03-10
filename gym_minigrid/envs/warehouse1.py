@@ -33,7 +33,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			see_through_walls = True,
 		)
 
-		#self.action_space = spaces.Discrete(self.actions.forward + 1)
+		self.action_space = spaces.Discrete(self.actions.forward + 1)
 		self.reward_range = (-1,1)
 
 
@@ -120,7 +120,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 
 		obs, reward, done, info = MiniGridEnv.step(self, action)
 
-
+		reward -= 0.2
 
 		"""
 		front_cell = self.grid.get(*self.front_pos)
