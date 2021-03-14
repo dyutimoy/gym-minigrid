@@ -95,7 +95,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		for i_pod_x in range(self.n_pods):
 			for i_pod_y in range(self.n_pods):
 				for i_cluster in range(self.n_cluster):
-					if random()>.99 and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'red' and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'green' and  self.pods[i_pod_x][i_pod_y][i_cluster].color == 'yellow': 
+					if random()>.99 and self.pods[i_pod_x][i_pod_y][i_cluster].contains != None and self.pods[i_pod_x][i_pod_y][i_cluster].color != 'green' and  self.pods[i_pod_x][i_pod_y][i_cluster].color == 'yellow': 
 						#print(random())
 						self.pods[i_pod_x][i_pod_y][i_cluster].contains.set_time_count(self)
 						self.pods[i_pod_x][i_pod_y][i_cluster].color= 'green'
@@ -120,7 +120,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 
 		obs, reward, done, info = MiniGridEnv.step(self, action)
 
-		reward -= 0.2
+		reward -= 0.001
 
 		"""
 		front_cell = self.grid.get(*self.front_pos)
