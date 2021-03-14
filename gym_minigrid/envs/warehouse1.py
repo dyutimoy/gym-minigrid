@@ -165,6 +165,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			reward -=0.01
 		"""
 		#print(reward)
+		print(obs)
 		return obs,reward, done, info
 
 class SimpleWarehouseEnv32x32(SimpleWarehouseEnv):

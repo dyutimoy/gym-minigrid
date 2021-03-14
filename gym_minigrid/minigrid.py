@@ -116,7 +116,7 @@ class WorldObj:
 
     def encode(self):
         """Encode the a description of this object as a 3-tuple of integers and time if applicable"""
-        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0,-1)
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], 0,0)
 
     @staticmethod
     def decode(type_idx, color_idx, state,time_count_val):
@@ -289,7 +289,7 @@ class Door(WorldObj):
 
 
 class Dropzone(WorldObj):
-    def __init__(self, color='purple',contains =None,is_occupied = False, is_unoccupied = True):
+    def __init__(self, color='red',contains =None,is_occupied = False, is_unoccupied = True):
         super().__init__('dropzone', color)
         self.contains = contains
         self.is_occupied  = is_occupied
@@ -312,25 +312,27 @@ class Dropzone(WorldObj):
     def toggle(self,env, pos): 
 
         if env.carrying is None and self.contains:
+            self.color='red'
             env.carrying = self.contains
             self.is_unoccupied = True
             self.is_occupied = False
             self.contains = None
         elif env.carrying and self.contains is None:
+            self.color ='purple'
             self.contains = env.carrying
             self.is_occupied = True
             self.is_unoccupied = False
             env.carrying = None
             self.contains.is_scheduled = False
             self.contains.is_unscheduled = True
-            if self.contains.time_count != -1:
+            if self.contains.time_count != 0:
                 env.reward += -(env.step_count - self.contains.time_count)/100  +4 
-            self.contains.time_count = -1
+            self.contains.time_count = 0
 
         return True
     def render(self, img):
         c = COLORS[self.color]
-        a = COLORS['red']
+        
         if self.is_occupied: 
         
             #body person
@@ -340,11 +342,12 @@ class Dropzone(WorldObj):
             fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
 
         else:
+
             #body person
-            fill_coords(img, point_in_rect(0, 1, 0.5, 1), a)
+            fill_coords(img, point_in_rect(0, 1, 0.5, 1), c)
             
             # Draw door handle
-            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), a)
+            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
 
     def encode(self):
         if self.is_occupied:
@@ -356,13 +359,13 @@ class Dropzone(WorldObj):
             state = 6
             time_count_val =0 
 
-        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, 0 )
+        return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, time_count_val )
 
 
 
 
 class Rackzone(WorldObj):
-    def __init__(self, color='yellow', contains = None, is_occupied = True, is_unoccupied =False, time_count = -1):
+    def __init__(self, color='yellow', contains = None, is_occupied = True, is_unoccupied =False, time_count = 0):
         super().__init__('rackzone', color)
         
         self.contains = contains
@@ -386,16 +389,18 @@ class Rackzone(WorldObj):
     def toggle(self,env, pos): 
 
         if env.carrying is None and self.contains:
+            self.color = 'red'
             env.carrying = self.contains
             self.is_unoccupied = True
             self.is_occupied = False
             self.contains = None
         elif env.carrying and self.contains is None:
+
             self.contains = env.carrying
             self.is_occupied = True
             self.is_unoccupied = False
             env.carrying = None
-            if self.contains.time_count == -1:
+            if self.contains.time_count == 0:
                 self.color = 'yellow'
             else: 
                 self.color = 'green'
@@ -409,13 +414,13 @@ class Rackzone(WorldObj):
 
         if self.is_unoccupied:
             state = 6
-            time_count_val = -1
+            time_count_val =00
 
         return (OBJECT_TO_IDX[self.type], COLOR_TO_IDX[self.color], state, time_count_val )
 
     def render(self, img):
         c = COLORS[self.color]
-        a = COLORS['red']
+        
         if self.is_occupied: 
         
             #body person
@@ -426,10 +431,10 @@ class Rackzone(WorldObj):
 
         else:
             #body person
-            fill_coords(img, point_in_rect(0, 1, 0.5, 1), a)
+            fill_coords(img, point_in_rect(0, 1, 0.5, 1), c)
             
             # Draw door handle
-            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), a)
+            fill_coords(img, point_in_circle(cx=0.51, cy=0.31, r=0.28), c)
 
 class Key(WorldObj):
     def __init__(self, color='blue'):
@@ -453,7 +458,7 @@ class Key(WorldObj):
         fill_coords(img, point_in_circle(cx=0.56, cy=0.28, r=0.064), (0,0,0))
 
 class Ball(WorldObj):
-    def __init__(self, color='blue', is_scheduled = False, is_unscheduled = True, time_count = -1):
+    def __init__(self, color='blue', is_scheduled = False, is_unscheduled = True, time_count = 0):
         super(Ball, self).__init__('ball', color )
         self.time_count = time_count
         self.is_scheduled = is_scheduled
