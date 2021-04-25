@@ -29,7 +29,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			self.n_pods = int(size/3)
 		super().__init__(
 			grid_size  = size,
-			max_steps = 4 * size * size,
+			max_steps = 8 * size * size,
 			see_through_walls = True,
 		)
 
@@ -119,7 +119,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 		
 
 		obs, reward, done, info = MiniGridEnv.step(self, action)
-
+		print(done)
 		reward -= 0.001
 
 		"""
@@ -165,7 +165,7 @@ class SimpleWarehouseEnv(MiniGridEnv):
 			reward -=0.01
 		"""
 		#print(reward)
-		print(obs)
+		#print(obs)
 		return obs,reward, done, info
 
 class SimpleWarehouseEnv32x32(SimpleWarehouseEnv):

@@ -327,6 +327,8 @@ class Dropzone(WorldObj):
             self.contains.is_unscheduled = True
             if self.contains.time_count != 0:
                 env.reward += -(env.step_count - self.contains.time_count)/100  +4 
+                env.done =True
+                print(env.done)
             self.contains.time_count = 0
 
         return True
@@ -915,6 +917,7 @@ class MiniGridEnv(gym.Env):
         # Step count since episode start
         self.step_count = 0
         self.reward = 0
+        self.done = False
         # Return first observation
         obs = self.gen_obs()
         return obs
@@ -1288,7 +1291,7 @@ class MiniGridEnv(gym.Env):
         self.step_count += 1
 
         self.reward = 0
-        done = False
+        self.done = False
 
         # Get the position in front of the agent
         fwd_pos = self.front_pos
@@ -1311,10 +1314,10 @@ class MiniGridEnv(gym.Env):
             if fwd_cell == None or fwd_cell.can_overlap(self):
                 self.agent_pos = fwd_pos
             if fwd_cell != None and fwd_cell.type == 'goal':
-                done = True
+                self.done = True
                 self.reward = self._reward()
             if fwd_cell != None and fwd_cell.type == 'lava':
-                done = True
+                self.done = True
 
         # Pick up an object
         elif action == self.actions.pickup:
@@ -1344,11 +1347,11 @@ class MiniGridEnv(gym.Env):
             assert False, "unknown action"
 
         if self.step_count >= self.max_steps:
-            done = True
+            self.done = True
 
         obs = self.gen_obs()
 
-        return obs, self.reward, done, {}
+        return obs, self.reward, self.done, {}
 
     def gen_obs_grid(self):
         """
