@@ -328,7 +328,7 @@ class Dropzone(WorldObj):
             if self.contains.time_count != 0:
                 env.reward += -(env.step_count - self.contains.time_count)/100  +4 
                 env.done =True
-                print(env.done)
+                #print(env.done)
             self.contains.time_count = 0
 
         return True
@@ -478,7 +478,7 @@ class Ball(WorldObj):
 
     def set_time_count(self,env):
         self.time_count = env.step_count
-        print(self.time_count)
+        #print(self.time_count)
         self.is_scheduled = True
         self.is_unscheduled = False
 
