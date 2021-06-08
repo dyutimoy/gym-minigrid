@@ -326,7 +326,7 @@ class Dropzone(WorldObj):
             self.contains.is_scheduled = False
             self.contains.is_unscheduled = True
             if self.contains.time_count != 0:
-                env.reward += -(env.step_count - self.contains.time_count)/100  +4 
+                env.reward += -(env.step_count - self.contains.time_count)/500  +1 
                 env.done =True
                 #print(env.done)
             self.contains.time_count = 0
