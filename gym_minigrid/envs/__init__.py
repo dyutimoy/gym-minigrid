@@ -1,3 +1,4 @@
+"""
 from gym_minigrid.envs.empty import *
 from gym_minigrid.envs.doorkey import *
 from gym_minigrid.envs.multiroom import *
@@ -19,4 +20,7 @@ from gym_minigrid.envs.crossing import *
 from gym_minigrid.envs.lavagap import *
 from gym_minigrid.envs.dynamicobstacles import *
 from gym_minigrid.envs.distshift import *
+
+"""
 from gym_minigrid.envs.warehouse1 import *
+from gym_minigrid.envs.alphabot import *
